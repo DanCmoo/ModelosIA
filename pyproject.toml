@@ -1,0 +1,8 @@
+[project]
+name = "modelo-cloro-lstm"
+version = "0.1.0"
+description = "Modelo de predicción de concentración de cloro usando LSTM"
+requires-python = ">=3.8"
+
+# Sin dependencias en pyproject.toml - usar requirements.txt
+# Esto permite usar uv run sin problemas de estructura de paquete
