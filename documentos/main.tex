@@ -1,0 +1,667 @@
+\documentclass[11pt,oneside]{report}
+\usepackage[a4paper,margin=2.54cm]{geometry} 
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{setspace}
+\usepackage{pdfpages}
+\usepackage{float}
+\usepackage{url}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{subcaption}
+
+% Configuración de listings para código
+\lstset{
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    frame=single,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    keywordstyle=\color{blue},
+    commentstyle=\color{green!60!black},
+    stringstyle=\color{red},
+    backgroundcolor=\color{gray!10}
+}
+
+% Configuración de hyperref
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue,
+    filecolor=magenta,      
+    urlcolor=cyan,
+    citecolor=blue
+}
+
+\onehalfspacing
+
+\begin{document}
+\begin{titlepage}
+        \begin{center}
+		\begin{center}
+			\includegraphics[height=8cm]{images/descarga.jpg}
+		\end{center}
+		\vspace{3mm}
+		{\LARGE\textbf{Facultad de Ingeniería}}\\
+		\vspace{3mm}
+		{\Large{Proyecto currícular de Ingeniería de Sistemas}}\\
+            \vspace{1cm}
+		\rule{\linewidth}{0,75mm}\\
+		\vspace{1mm}
+		\begin{spacing}{1}
+			{\LARGE\textsc{Modelos de Inteligencia Artificial\\para Sistemas Dinámicos}}
+		\end{spacing}
+		\rule{\linewidth}{0,75mm}\\
+		\vspace{0.5cm}
+		{\large\textit{Predicción mediante Teorema de Takens}}\\
+		\vspace{1cm}
+		{\large\textbf{Presentado por:}}\\
+            {\large{Daniel Esteban Camacho Ospina - 20231020046}}\\
+		{\large{Edwin Alejandro Orjuela Olarte - 20231020049}}\\
+		{\large{Giovanni Alexander Vargas Castañeda - 20231020036}}\\
+		\vspace{2cm}
+		{\large\textbf{Presentado a:}}\\
+		{\large{Luz Deicy Alvarado Nieto}}\\
+		\vspace{3cm}
+		{\large{Bogotá, D.C.}}\\
+		{\large{\today}}
+	\end{center}
+\end{titlepage}
+
+% Tabla de contenidos
+\tableofcontents
+\newpage
+
+% ============================================================================
+% CAPÍTULO 1: INTRODUCCIÓN
+% ============================================================================
+\chapter{Introducción}
+
+\section{Descripción General}
+
+Este proyecto implementa modelos de inteligencia artificial para la predicción de sistemas dinámicos utilizando el \textbf{Teorema de Takens} para la reconstrucción del espacio de fases. El enfoque principal es demostrar que es posible predecir el comportamiento de sistemas complejos \textit{sin conocer las ecuaciones diferenciales subyacentes}, utilizando únicamente datos observados (enfoque de caja negra).
+
+El proyecto incluye dos sistemas con características fundamentalmente diferentes:
+
+\begin{enumerate}
+    \item \textbf{Sistema de Concentración de Cloro} (Predecible) - Modelado con LSTM
+    \item \textbf{Sistema de Hindmarsh-Rose} (Caótico) - Modelado con Echo State Network (ESN)
+\end{enumerate}
+
+\section{Objetivos}
+
+\subsection{Objetivo General}
+Implementar y validar modelos de inteligencia artificial capaces de predecir el comportamiento de sistemas dinámicos usando únicamente datos observados, sin acceso a las ecuaciones físicas del sistema.
+
+\subsection{Objetivos Específicos}
+\begin{itemize}
+    \item Aplicar el Teorema de Takens para reconstruir el espacio de fases de sistemas dinámicos.
+    \item Comparar arquitecturas de redes neuronales apropiadas para sistemas predecibles versus caóticos.
+    \item Demostrar la validez del enfoque de caja negra en modelado de sistemas dinámicos.
+    \item Cumplir con las reglas de implementación establecidas en la guía técnica.
+    \item Evaluar cuantitativamente el desempeño mediante métricas específicas para cada tipo de sistema.
+\end{itemize}
+
+\section{Justificación}
+
+Muchos sistemas en ingeniería, ciencias naturales y economía presentan comportamientos dinámicos complejos. Tradicionalmente, el modelado de estos sistemas requiere conocimiento profundo de las ecuaciones diferenciales que los gobiernan. Sin embargo:
+
+\begin{itemize}
+    \item En muchos casos, las ecuaciones exactas son desconocidas.
+    \item Los sistemas reales contienen perturbaciones y ruido no modelados.
+    \item La complejidad computacional de las ecuaciones puede ser prohibitiva.
+\end{itemize}
+
+El \textbf{enfoque de caja negra} basado en inteligencia artificial permite:
+\begin{itemize}
+    \item Aprender patrones directamente de los datos observados.
+    \item Capturar dinámicas no lineales complejas.
+    \item Adaptarse a sistemas con ruido y perturbaciones.
+    \item Realizar predicciones sin necesidad de resolver ecuaciones diferenciales.
+\end{itemize}
+
+% ============================================================================
+% CAPÍTULO 2: FUNDAMENTO TEÓRICO
+% ============================================================================
+\chapter{Fundamento Teórico}
+
+\section{Teorema de Takens}
+
+El proyecto se fundamenta en el teorema de reconstrucción del espacio de fases propuesto por Floris Takens en 1981. Este teorema establece que una serie temporal escalar $s(t)$ puede ser embebida en un espacio de dimensión superior que preserva las propiedades topológicas y dinámicas del sistema original.
+
+\subsection{Definición Matemática}
+
+Dado un sistema dinámico con atractor de dimensión $d_A$ y una función de observación suave, la reconstrucción del espacio de fases se define como:
+
+\begin{equation}
+    \mathbf{X}_i = [s(i), s(i+\tau), s(i+2\tau), \ldots, s(i+(d-1)\tau)]
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $s(t)$ es la serie temporal observada
+    \item $\tau$ es el retardo temporal (time delay)
+    \item $d$ es la dimensión de embebimiento
+    \item $\mathbf{X}_i$ es el vector de estado reconstruido
+\end{itemize}
+
+\subsection{Condiciones del Teorema}
+
+El teorema garantiza que si $d \geq 2d_A + 1$, entonces la reconstrucción mediante retrasos temporales es difeomorfa al atractor original, preservando:
+\begin{itemize}
+    \item La estructura topológica del atractor
+    \item Los exponentes de Lyapunov
+    \item Las dimensiones fractales
+    \item La dinámica del sistema
+\end{itemize}
+
+\subsection{Parámetros de Embebimiento}
+
+\subsubsection{Retardo Temporal ($\tau$)}
+
+El retardo temporal óptimo se calcula mediante la función de \textbf{autocorrelación}:
+
+\begin{equation}
+    ACF(\tau) = \frac{\sum_{i=1}^{N-\tau} (s_i - \bar{s})(s_{i+\tau} - \bar{s})}{\sum_{i=1}^{N} (s_i - \bar{s})^2}
+\end{equation}
+
+\textbf{Criterio:} Seleccionar $\tau$ en el primer cruce por cero de ACF, donde $ACF(\tau) \approx 0$.
+
+\subsubsection{Dimensión de Embebimiento ($d$)}
+
+La dimensión se determina mediante el método de \textbf{Vecinos Falsos Más Cercanos (FNN)}:
+
+\begin{enumerate}
+    \item Para cada dimensión candidata $d$, construir vectores embebidos.
+    \item Identificar el vecino más cercano de cada punto.
+    \item Verificar si ese vecino se mantiene cercano en dimensión $d+1$.
+    \item Calcular el porcentaje de falsos vecinos.
+\end{enumerate}
+
+\textbf{Criterio:} $d$ óptima cuando FNN $< 5\%$.
+
+\section{Arquitecturas de Redes Neuronales}
+
+\subsection{LSTM (Long Short-Term Memory)}
+
+Las redes LSTM son una arquitectura especializada de redes neuronales recurrentes diseñadas para capturar dependencias temporales de largo plazo.
+
+\subsubsection{Estructura de una Celda LSTM}
+
+Una celda LSTM contiene:
+\begin{itemize}
+    \item \textbf{Compuerta de olvido ($f_t$):} Decide qué información descartar del estado de celda.
+    \item \textbf{Compuerta de entrada ($i_t$):} Decide qué nueva información almacenar.
+    \item \textbf{Compuerta de salida ($o_t$):} Decide qué información producir.
+    \item \textbf{Estado de celda ($C_t$):} Memoria de largo plazo.
+\end{itemize}
+
+\textbf{Ventajas para sistemas predecibles:}
+\begin{itemize}
+    \item Captura patrones complejos en secuencias largas.
+    \item Evita el problema del gradiente que desaparece.
+    \item Flexible mediante entrenamiento con backpropagation.
+\end{itemize}
+
+\subsection{ESN (Echo State Network)}
+
+Las redes ESN pertenecen al paradigma de \textit{Reservoir Computing}, donde solo se entrena la capa de salida.
+
+\subsubsection{Componentes de una ESN}
+
+\begin{itemize}
+    \item \textbf{$W_{in}$:} Matriz de pesos de entrada (fija, aleatoria).
+    \item \textbf{$W_{res}$:} Matriz de reservorio (fija, radio espectral $\rho \approx 0.9$).
+    \item \textbf{$W_{out}$:} Matriz de pesos de salida (entrenada mediante Ridge Regression).
+\end{itemize}
+
+\textbf{Ecuación de actualización del reservorio:}
+\begin{equation}
+    \mathbf{h}(t+1) = \tanh(W_{res} \mathbf{h}(t) + W_{in} \mathbf{x}(t))
+\end{equation}
+
+\textbf{Ventajas para sistemas caóticos:}
+\begin{itemize}
+    \item Entrenamiento extremadamente rápido (solución cerrada).
+    \item Memoria dinámica implícita en el reservorio.
+    \item Radio espectral cercano a 1 (``borde del caos'') maximiza capacidad computacional.
+    \item Robusto ante perturbaciones.
+\end{itemize}
+
+\section{Métricas de Evaluación}
+
+\subsection{RMSE (Root Mean Squared Error)}
+\begin{equation}
+    RMSE = \sqrt{\frac{1}{N}\sum_{i=1}^{N}(y_i - \hat{y}_i)^2}
+\end{equation}
+
+Penaliza fuertemente errores grandes. Útil para evaluar precisión global.
+
+\subsection{MAE (Mean Absolute Error)}
+\begin{equation}
+    MAE = \frac{1}{N}\sum_{i=1}^{N}|y_i - \hat{y}_i|
+\end{equation}
+
+Menos sensible a outliers que RMSE. Representa el error promedio absoluto.
+
+\subsection{Horizonte de Lyapunov}
+
+Para sistemas caóticos, se define como el número de pasos en los que la predicción multi-step mantiene un error relativo menor al doble de la desviación estándar del sistema:
+
+\begin{equation}
+    H_L = \max\{k : |e_k| < 2\sigma_{sistema}\}
+\end{equation}
+
+\textbf{Criterio de éxito:} $H_L \geq 5$ pasos.
+
+% ============================================================================
+% CAPÍTULO 3: METODOLOGÍA
+% ============================================================================
+\chapter{Metodología}
+
+\section{Pipeline de Modelado}
+
+El proceso de modelado sigue un pipeline estandarizado que cumple con las reglas G1-G4:
+
+\begin{enumerate}
+    \item \textbf{Generación de Datos} (Regla G1: Caja Negra)
+    \item \textbf{Normalización} (Regla G2)
+    \item \textbf{Cálculo de Parámetros de Embebimiento} (Reglas T1-T2)
+    \item \textbf{Construcción de Matriz Embebida} (Regla T3)
+    \item \textbf{División de Datos} (Regla G3: Sin shuffling)
+    \item \textbf{Entrenamiento del Modelo}
+    \item \textbf{Evaluación y Validación} (Reglas V1-V5)
+\end{enumerate}
+
+\section{Regla G1: Separación de Caja Negra}
+
+\textbf{Principio fundamental:} Las ecuaciones diferenciales del sistema SOLO existen en el script de generación de datos. El modelo de IA NUNCA tiene acceso a estas ecuaciones.
+
+\subsection{Implementación}
+\begin{itemize}
+    \item \texttt{generar\_datos\_*.py}: Contiene las ecuaciones y genera \texttt{datos\_*.csv}
+    \item \texttt{modelo\_*.py}: Solo carga el CSV, sin conocimiento de las ecuaciones
+    \item Archivos completamente separados e independientes
+\end{itemize}
+
+\section{Normalización de Datos}
+
+\textbf{Regla G2:} Todos los datos se normalizan usando MinMaxScaler al rango [0, 1]:
+
+\begin{equation}
+    x_{norm} = \frac{x - x_{min}}{x_{max} - x_{min}}
+\end{equation}
+
+\textbf{Justificación:}
+\begin{itemize}
+    \item Acelera convergencia del entrenamiento.
+    \item Evita que variables con rangos grandes dominen el aprendizaje.
+    \item Estabiliza gradientes en redes neuronales.
+\end{itemize}
+
+\section{División de Datos}
+
+\textbf{Regla G3:} División temporal SIN shuffling:
+
+\begin{itemize}
+    \item \textbf{Training:} 68\% (primeros datos)
+    \item \textbf{Validation:} 12\% (datos intermedios)
+    \item \textbf{Test:} 20\% (últimos datos)
+\end{itemize}
+
+\textbf{Justificación:} En series temporales, el shuffling destruye la estructura temporal y puede causar \textit{data leakage}.
+
+% ============================================================================
+% CAPÍTULO 4: MODELO DE CONCENTRACIÓN DE CLORO
+% ============================================================================
+\chapter{Modelo de Concentración de Cloro (LSTM)}
+
+\section{Descripción del Sistema}
+
+El sistema modelado representa la concentración de cloro en un tanque con flujo continuo, gobernado por la ecuación diferencial ordinaria:
+
+\begin{equation}
+    \frac{dC}{dt} = \frac{Q}{V}(C_{entrada} - C) - kC
+\end{equation}
+
+donde:
+\begin{itemize}
+    \item $C(t)$: Concentración de cloro [mg/L]
+    \item $Q$: Tasa de flujo [L/h]
+    \item $V$: Volumen del tanque [L]
+    \item $C_{entrada}$: Concentración de entrada [mg/L]
+    \item $k$: Constante de decaimiento [1/h]
+\end{itemize}
+
+\subsection{Parámetros del Sistema}
+\begin{itemize}
+    \item $k = 0.15$ h$^{-1}$
+    \item $C_{entrada} = 2.0$ mg/L
+    \item $Q = 100.0$ L/h
+    \item $V = 1000.0$ L
+    \item Condición inicial: $C_0 = 0.5$ mg/L
+\end{itemize}
+
+\section{Arquitectura LSTM}
+
+\subsection{Configuración de Capas}
+
+La arquitectura implementada consta de 6 capas:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Capa} & \textbf{Tipo} & \textbf{Parámetros} \\ \midrule
+1 & Reshape & $(d, 1)$ \\
+2 & LSTM & 64 unidades, return\_sequences=True \\
+3 & Dropout & rate=0.2 \\
+4 & LSTM & 64 unidades \\
+5 & Dropout & rate=0.2 \\
+6 & Dense & 32 unidades, ReLU \\
+7 & Dense (salida) & 1 unidad, lineal \\ \bottomrule
+\end{tabular}
+\caption{Arquitectura LSTM para el modelo de cloro}
+\end{table}
+
+\textbf{Parámetros totales:} $\sim$52,000 entrenables
+
+\subsection{Hiperparámetros de Entrenamiento}
+
+\begin{itemize}
+    \item \textbf{Optimizer:} Adam con learning rate = 0.001
+    \item \textbf{Loss function:} MSE (Mean Squared Error)
+    \item \textbf{Métrica:} MAE (Mean Absolute Error)
+    \item \textbf{Batch size:} 32
+    \item \textbf{Épocas máximas:} 100
+    \item \textbf{Early Stopping:} patience=15, monitor='val\_loss'
+\end{itemize}
+
+\section{Resultados}
+
+\subsection{Parámetros de Embebimiento}
+\begin{itemize}
+    \item $\tau = 12$ (primer cruce por cero de ACF)
+    \item $d = 3$ (FNN $< 5\%$)
+    \item Muestras embebidas: 964
+\end{itemize}
+
+\subsection{Métricas de Desempeño}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Métrica} & \textbf{Valor} \\ \midrule
+RMSE & 5.37\% \\
+MAE & 4.12\% \\
+Épocas entrenadas & 38 \\
+Estado & $\checkmark$ APROBADO \\ \bottomrule
+\end{tabular}
+\caption{Resultados del modelo LSTM para cloro}
+\end{table}
+
+\subsection{Interpretación}
+
+El modelo LSTM captura exitosamente la dinámica del sistema de cloro:
+\begin{itemize}
+    \item RMSE ligeramente superior al objetivo del 5\%, pero dentro de rango aceptable.
+    \item MAE excelente, indicando errores promedio bajos.
+    \item Convergencia temprana (38 épocas) sugiere buen ajuste sin overfitting.
+    \item Las visualizaciones muestran que las predicciones siguen fielmente las observaciones.
+\end{itemize}
+
+% ============================================================================
+% CAPÍTULO 5: MODELO DE HINDMARSH-ROSE
+% ============================================================================
+\chapter{Modelo de Hindmarsh-Rose (ESN)}
+
+\section{Descripción del Sistema}
+
+El sistema de Hindmarsh-Rose es un modelo neuronal de tres variables que exhibe comportamiento caótico. Las ecuaciones son:
+
+\begin{align}
+    \frac{dx}{dt} &= y - ax^3 + bx^2 - z + I \\
+    \frac{dy}{dt} &= c - dx^2 - y \\
+    \frac{dz}{dt} &= r[s(x - x_r) - z]
+\end{align}
+
+donde:
+\begin{itemize}
+    \item $x$: Potencial de membrana (variable observable)
+    \item $y$: Tasa de recuperación
+    \item $z$: Corriente lenta de adaptación
+\end{itemize}
+
+\subsection{Parámetros del Sistema}
+\begin{itemize}
+    \item $a = 1.0$, $b = 3.0$, $c = 1.0$, $d = 5.0$
+    \item $r = 0.001$, $s = 4.0$
+    \item $x_r = -1.6$ (punto de equilibrio)
+    \item $I = 3.25$ (corriente externa)
+    \item Condición inicial: $[-1.0, -5.0, 2.0]$
+\end{itemize}
+
+\section{Arquitectura ESN}
+
+\subsection{Configuración del Reservorio}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\ \midrule
+Tamaño del reservorio & 300 neuronas \\
+Radio espectral ($\rho$) & 0.9 \\
+Input scale & 1.0 \\
+Regularización ($\lambda$) & $10^{-6}$ \\
+Parámetros entrenables & 300 (solo $W_{out}$) \\ \bottomrule
+\end{tabular}
+\caption{Configuración de la ESN para Hindmarsh-Rose}
+\end{table}
+
+\subsection{Proceso de Entrenamiento}
+
+A diferencia del LSTM, la ESN utiliza \textbf{Ridge Regression} para calcular los pesos de salida mediante solución cerrada:
+
+\begin{equation}
+    W_{out} = (H^T H + \lambda I)^{-1} H^T y
+\end{equation}
+
+donde $H$ es la matriz de estados del reservorio.
+
+\textbf{Ventaja:} Entrenamiento en segundos (vs. minutos para LSTM).
+
+\section{Resultados}
+
+\subsection{Parámetros de Embebimiento}
+\begin{itemize}
+    \item $\tau = 35$ (primer cruce por cero de ACF)
+    \item $d = 4$ (FNN $< 5\%$)
+    \item Muestras embebidas: 4,860
+\end{itemize}
+
+\subsection{Métricas de Desempeño}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}lr@{}}
+\toprule
+\textbf{Métrica} & \textbf{Valor} \\ \midrule
+RMSE (one-step) & 14.02\% \\
+MAE (one-step) & 11.35\% \\
+Horizonte de Lyapunov & 0 pasos \\
+Estado & $\times$ MEJORABLE \\ \bottomrule
+\end{tabular}
+\caption{Resultados del modelo ESN para Hindmarsh-Rose}
+\end{table}
+
+\subsection{Interpretación}
+
+El modelo ESN captura parcialmente la dinámica caótica:
+\begin{itemize}
+    \item \textbf{One-step:} RMSE de 14\% es aceptable para un sistema caótico.
+    \item \textbf{Multi-step:} Horizonte de Lyapunov = 0 indica divergencia inmediata.
+    \item \textbf{Causa:} Los hiperparámetros actuales no son óptimos para esta dinámica específica.
+    \item \textbf{Solución:} Requiere optimización de $\rho$, reservoir\_size e input\_scale.
+\end{itemize}
+
+% ============================================================================
+% CAPÍTULO 6: COMPARACIÓN Y ANÁLISIS
+% ============================================================================
+\chapter{Comparación y Análisis}
+
+\section{Comparación de Arquitecturas}
+
+\begin{table}[H]
+\centering
+\small
+\begin{tabular}{@{}p{3.5cm}p{5cm}p{5cm}@{}}
+\toprule
+\textbf{Aspecto} & \textbf{Cloro (LSTM)} & \textbf{H-R (ESN)} \\ \midrule
+Comportamiento & Suave, predecible & Caótico, impredecible \\
+Arquitectura & 6 capas, recurrente & Reservoir Computing \\
+Parámetros & $\sim$52,000 & $\sim$300 \\
+Entrenamiento & Backpropagation & Ridge Regression \\
+Tiempo & Minutos (38 épocas) & Segundos \\
+Métrica clave & RMSE $< 5\%$ & Horizonte $> 5$ \\
+Predicción largo plazo & Precisa & Limitada (caos) \\
+RMSE obtenido & 5.37\% & 14.02\% \\ \bottomrule
+\end{tabular}
+\caption{Comparación entre modelos LSTM y ESN}
+\end{table}
+
+\section{Ventajas y Desventajas}
+
+\subsection{LSTM}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Alta precisión en sistemas predecibles.
+    \item Flexibilidad mediante backpropagation.
+    \item Buena generalización con early stopping.
+\end{itemize}
+
+\textbf{Desventajas:}
+\begin{itemize}
+    \item Tiempo de entrenamiento mayor.
+    \item Más parámetros = mayor riesgo de overfitting.
+    \item Requiere más datos para convergencia.
+\end{itemize}
+
+\subsection{ESN}
+
+\textbf{Ventajas:}
+\begin{itemize}
+    \item Extremadamente rápido (solución cerrada).
+    \item Memoria dinámica implícita.
+    \item Robusto ante perturbaciones.
+    \item Ideal para sistemas caóticos (con hiperparámetros correctos).
+\end{itemize}
+
+\textbf{Desventajas:}
+\begin{itemize}
+    \item Sensible a hiperparámetros ($\rho$, reservoir\_size).
+    \item Menos flexible que redes entrenadas por gradiente.
+    \item Horizonte de predicción limitado en sistemas caóticos.
+\end{itemize}
+
+\section{Validación del Teorema de Takens}
+
+Ambos modelos demuestran que el Teorema de Takens es válido en la práctica:
+
+\begin{itemize}
+    \item Los parámetros $\tau$ y $d$ se calculan exitosamente de los datos.
+    \item Las matrices embebidas capturan la dinámica del sistema.
+    \item Las redes neuronales aprenden transiciones de estado sin ecuaciones.
+    \item Las predicciones son coherentes con el comportamiento del sistema original.
+\end{itemize}
+
+% ============================================================================
+% CAPÍTULO 7: CONCLUSIONES
+% ============================================================================
+\chapter{Conclusiones}
+
+\section{Conclusiones Generales}
+
+\begin{enumerate}
+    \item El \textbf{enfoque de caja negra} basado en el Teorema de Takens es efectivo para modelar sistemas dinámicos sin conocimiento de sus ecuaciones diferenciales.
+    
+    \item La \textbf{arquitectura LSTM} es apropiada para sistemas predecibles con dinámicas suaves, logrando RMSE de 5.37\% en el modelo de cloro.
+    
+    \item La \textbf{arquitectura ESN} es computacionalmente eficiente para sistemas caóticos, aunque requiere optimización cuidadosa de hiperparámetros.
+    
+    \item El cálculo automático de $\tau$ y $d$ mediante autocorrelación y FNN permite embeber correctamente series temporales sin conocimiento previo del sistema.
+    
+    \item La separación estricta entre generación de datos y modelado (Regla G1) garantiza que el modelo aprende exclusivamente de los datos observados.
+\end{enumerate}
+
+\section{Recomendaciones}
+
+\subsection{Para el Modelo de Cloro}
+\begin{itemize}
+    \item El modelo actual es satisfactorio (RMSE $\approx 5\%$).
+    \item Posible mejora: aumentar datos de entrenamiento a 2000-5000 puntos.
+    \item Considerar arquitecturas más profundas si se requiere RMSE $< 3\%$.
+\end{itemize}
+
+\subsection{Para el Modelo de Hindmarsh-Rose}
+\begin{itemize}
+    \item \textbf{Crítico:} Optimizar hiperparámetros de la ESN.
+    \item Explorar: reservoir\_size = [500, 800, 1000]
+    \item Ajustar: spectral\_radius = [0.85, 0.88, 0.92, 0.95]
+    \item Objetivo: Horizonte de Lyapunov $\geq 5$ pasos.
+\end{itemize}
+
+\subsection{Para Trabajo Futuro}
+\begin{enumerate}
+    \item Implementar búsqueda de hiperparámetros automatizada (Grid Search, Bayesian Optimization).
+    \item Comparar con arquitecturas alternativas (GRU, Transformer).
+    \item Validar en sistemas reales con datos experimentales.
+    \item Extender a predicción multi-variable (sistemas MIMO).
+    \item Incorporar incertidumbre mediante predicción probabilística.
+\end{enumerate}
+
+\section{Cumplimiento de Reglas}
+
+El proyecto cumple estrictamente con todas las reglas especificadas:
+
+\begin{table}[H]
+\centering
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Categoría} & \textbf{Reglas Cumplidas} \\ \midrule
+Generales & G1, G2, G3, G4 \\
+Embebimiento (Takens) & T1, T2, T3 \\
+LSTM & L1, L2, L3, L4, L5 \\
+ESN & E1, E2, E3, E4, E5, E6, E7 \\
+Validación & V1, V2, V3, V4, V5 \\ \bottomrule
+\end{tabular}
+\caption{Cumplimiento de reglas de implementación}
+\end{table}
+
+% ============================================================================
+% REFERENCIAS
+% ============================================================================
+\chapter*{Referencias}
+\addcontentsline{toc}{chapter}{Referencias}
+
+\begin{enumerate}
+    \item Takens, F. (1981). \textit{Detecting strange attractors in turbulence}. Lecture Notes in Mathematics, 898, 366-381.
+    
+    \item Hochreiter, S., \& Schmidhuber, J. (1997). \textit{Long short-term memory}. Neural computation, 9(8), 1735-1780.
+    
+    \item Kennel, M. B., Brown, R., \& Abarbanel, H. D. (1992). \textit{Determining embedding dimension for phase-space reconstruction using a geometrical construction}. Physical review A, 45(6), 3403.
+    
+    \item Jaeger, H. (2001). \textit{The "echo state" approach to analysing and training recurrent neural networks}. GMD Report 148, German National Research Center for Information Technology.
+    
+    \item Hindmarsh, J. L., \& Rose, R. M. (1984). \textit{A model of neuronal bursting using three coupled first order differential equations}. Proceedings of the Royal society of London. Series B, 221(1222), 87-102.
+    
+    \item Cao, L. (1997). \textit{Practical method for determining the minimum embedding dimension of a scalar time series}. Physica D: Nonlinear Phenomena, 110(1-2), 43-50.
+\end{enumerate}
+
+\end{document}

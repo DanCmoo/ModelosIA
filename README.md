@@ -1,14 +1,20 @@
-# Modelo de Predicción de Concentración de Cloro con LSTM
+# Modelos de IA para Sistemas Dinámicos
 
 ## 📋 Descripción
 
-Este proyecto implementa un modelo de predicción de concentración de cloro usando **LSTM (Long Short-Term Memory)** basado en el **Teorema de Takens** para reconstrucción del espacio de fases. El proyecto sigue estrictamente las reglas y especificaciones de la guía técnica.
+Este proyecto implementa modelos de inteligencia artificial para predicción de sistemas dinámicos usando el **Teorema de Takens** para reconstrucción del espacio de fases. Incluye dos sistemas con diferentes características:
+
+1. **Cloro (Sistema Predecible)** - LSTM
+2. **Hindmarsh-Rose (Sistema Caótico)** - Echo State Network (ESN)
+
+El proyecto sigue estrictamente las reglas y especificaciones de la guía técnica, demostrando que la IA puede aprender dinámicas **sin conocer las ecuaciones subyacentes** (enfoque de caja negra).
 
 ## 🎯 Objetivos
 
-- Predecir la concentración de cloro en un sistema de tratamiento de agua
-- Demostrar que la IA puede aprender dinámicas sin conocer las ecuaciones subyacentes
-- Cumplir con todas las reglas de implementación (G1-G4, T1-T3, L1-L5, V1-V2)
+- Predecir comportamientos de sistemas dinámicos usando solo datos observados
+- Comparar arquitecturas apropiadas para sistemas predecibles vs caóticos
+- Demostrar la validez del Teorema de Takens en modelado de caja negra
+- Cumplir con todas las reglas de implementación (G1-G4, T1-T3, L1-L5/E1-E7, V1-V5)
 
 ## 🔬 Fundamento Teórico
 
@@ -25,19 +31,21 @@ Donde:
 
 ```
 ModelosIA/
-├── cloro/                           # Modelo de Concentración de Cloro
+├── cloro/                           # Modelo de Concentración de Cloro (LSTM)
 │   ├── generar_datos_cloro.py      # Genera serie temporal y guarda CSV
 │   ├── modelo_cloro_lstm.py         # Modelo LSTM principal
 │   ├── ejecutar_pipeline.py         # Script para ejecutar todo el pipeline
 │   ├── comparar_modelos.py          # Comparación modelo físico vs LSTM
 │   ├── README.md                    # Documentación del modelo de cloro
-│   ├── datos_cloro.csv              # Serie temporal generada
-│   ├── modelo_lstm_cloro.h5         # Modelo entrenado
-│   ├── datos_cloro_visualizacion.png
-│   ├── lstm_cloro_resultados.png
-│   └── comparacion_modelo_fisico_vs_lstm.png
+│   └── [archivos generados...]
+├── hindmarsh_rose/                  # Modelo de Hindmarsh-Rose (ESN)
+│   ├── generar_datos_hindmarsh_rose.py  # Genera serie caótica y guarda CSV
+│   ├── modelo_hindmarsh_rose_esn.py     # Modelo ESN principal
+│   ├── ejecutar_pipeline.py         # Script para ejecutar todo el pipeline
+│   ├── README.md                    # Documentación del modelo H-R
+│   └── [archivos generados...]
 ├── documentos/
-│   └── guia_tecnica_reglas.md       # Guía de implementación
+│   └── guia_tecnica_reglas.md       # Guía de implementación completa
 ├── pyproject.toml                   # Configuración UV/Python
 ├── requirements.txt                 # Dependencias (pip)
 ├── INSTALACION_UV.md                # Guía de instalación con UV
@@ -72,68 +80,78 @@ pip install -r requirements.txt
 
 ## 💻 Uso
 
-### Opción 1: Con UV (Recomendado)
+### Modelo de Cloro (LSTM)
 
 ```bash
 # Navegar a la carpeta del modelo
 cd cloro
 
-# Pipeline completo
+# Con UV (Recomendado)
 uv run --no-project ejecutar_pipeline.py
 
 # O paso a paso
 uv run --no-project generar_datos_cloro.py
 uv run --no-project modelo_cloro_lstm.py
+uv run --no-project comparar_modelos.py  # Comparación con modelo físico
 ```
 
-### Opción 2: Pipeline Completo (pip/entorno tradicional)
+### Modelo de Hindmarsh-Rose (ESN)
 
 ```bash
-cd cloro
-python ejecutar_pipeline.py
+# Navegar a la carpeta del modelo
+cd hindmarsh_rose
+
+# Con UV (Recomendado)
+uv run --no-project ejecutar_pipeline.py
+
+# O paso a paso
+uv run --no-project generar_datos_hindmarsh_rose.py
+uv run --no-project modelo_hindmarsh_rose_esn.py
 ```
 
-Este script ejecuta automáticamente:
-1. Generación de datos
-2. Entrenamiento del modelo LSTM
-3. Evaluación y visualización
+## 🏗️ Comparación de Arquitecturas
 
-### Opción 3: Ejecución Paso a Paso
+### Cloro vs Hindmarsh-Rose
 
-```bash
-cd cloro
+| Aspecto | Cloro (LSTM) | Hindmarsh-Rose (ESN) |
+|---------|--------------|---------------------|
+| **Comportamiento** | Suave, predecible | Caótico, impredecible |
+| **Arquitectura** | LSTM (6 capas) | ESN (Reservoir Computing) |
+| **Parámetros entrenables** | ~52,000 | ~300 (solo W_out) |
+| **Entrenamiento** | Backpropagation iterativo | Ridge Regression (solución cerrada) |
+| **Tiempo de entrenamiento** | Minutos (~38 épocas) | Segundos |
+| **Métrica clave** | RMSE < 5% | Horizonte Lyapunov > 5 pasos |
+| **Predicción largo plazo** | Precisa (many-step) | Limitada (efecto mariposa) |
+| **Reservoir size** | N/A | 300 neuronas |
+| **Spectral radius** | N/A | 0.9 (edge of chaos) |
 
-# Paso 1: Generar datos
-python generar_datos_cloro.py
-
-# Paso 2: Entrenar modelo
-python modelo_cloro_lstm.py
-```
-
-## 🏗️ Arquitectura del Modelo
-
-### Modelo LSTM (7 capas)
+### Modelo LSTM para Cloro
 
 ```
-Capa 1: Dense(64, activation='relu')        # Proyección inicial
-Capa 2: LSTM(64, return_sequences=True)      # Primera LSTM
-Capa 3: Dropout(0.2)                         # Regularización
-Capa 4: LSTM(64)                             # Segunda LSTM
-Capa 5: Dropout(0.2)                         # Regularización
-Capa 6: Dense(32, activation='relu')         # Capa intermedia
-Capa 7: Dense(1)                             # Salida escalar
+Arquitectura: 6 capas
+├─ Reshape(input_dim, 1)
+├─ LSTM(64, return_sequences=True)
+├─ Dropout(0.2)
+├─ LSTM(64)
+├─ Dropout(0.2)
+├─ Dense(32, activation='relu')
+└─ Dense(1)
+
+Parámetros: ~52,000
+Entrenamiento: Adam optimizer + Early Stopping
 ```
 
-### Hiperparámetros
+### Modelo ESN para Hindmarsh-Rose
 
-| Parámetro | Valor | Justificación |
-|-----------|-------|---------------|
-| Hidden Units | 64 | Balance entre capacidad y complejidad |
-| Dropout Rate | 0.2 | Previene overfitting |
-| Learning Rate | 0.001 | Convergencia estable |
-| Batch Size | 16 | Apropiado para ~800 muestras |
-| Épocas Máximas | 200 | Suficiente para convergencia |
-| Early Stopping Patience | 15 | Restaura mejores pesos |
+```
+Arquitectura: Reservoir Computing
+├─ W_in (input → reservoir): Fijo, aleatorio
+├─ W_res (reservoir): Fijo, ρ(W)=0.9
+└─ W_out (reservoir → output): Entrenado (Ridge)
+
+Parámetros entrenables: 300
+Entrenamiento: Solución cerrada (Ridge Regression)
+```
 
 ## 📊 Proceso de Modelado
 

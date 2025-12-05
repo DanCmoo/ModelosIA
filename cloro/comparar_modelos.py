@@ -286,6 +286,9 @@ def main():
         print("\n  ✗ MEJORABLE: Considerar ajustar hiperparámetros")
     
     print("="*70)
+    
+    # Mostrar gráficas en ventana
+    plt.show()
 
 
 if __name__ == "__main__":
